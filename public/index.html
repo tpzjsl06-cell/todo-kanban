@@ -1,0 +1,21 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Todo 칸반</title>
+<style>body{font-family:"맑은 고딕",sans-serif;background:#f8fafc;margin:0;padding:20px}h1{margin:0 0 4px}.sub{color:#64748b;font-size:13px;margin-bottom:14px}
+.bar{display:flex;gap:8px;margin-bottom:14px}input{flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:6px}button{background:#1f4e78;color:#fff;border:0;border-radius:6px;padding:8px 14px;cursor:pointer}
+.board{display:grid;grid-template-columns:1fr 1fr;gap:16px}.col{background:#e2e8f0;border-radius:10px;padding:10px;min-height:300px}.col h2{margin:0 0 10px;font-size:16px}
+.card{background:#fff;border-radius:8px;padding:10px;margin-bottom:8px;box-shadow:0 1px 2px #0002;cursor:grab;font-size:14px}.tag{font-size:11px;color:#1f4e78}.over{outline:2px dashed #1f4e78}</style></head><body>
+<h1>Todo 칸반</h1><div class="sub" id="sub">로딩 중...</div>
+<div class="bar"><input id="n" placeholder="할 일 추가 후 Enter"><button id="s">cands 지금 동기화</button></div>
+<div class="board"><div class="col" data-s="doing"><h2>Doing</h2></div><div class="col" data-s="done"><h2>Done</h2></div></div>
+<script>
+const api=(b)=>fetch('/api/todos',b?{method:'POST',body:JSON.stringify(b)}:{}).then(r=>r.json());
+function render(d){sub.textContent='마지막 cands 동기화: '+(d.syncedAt?new Date(d.syncedAt).toLocaleString('ko-KR'):'없음')+' (매시간 자동)';
+document.querySelectorAll('.col').forEach(c=>{c.querySelectorAll('.card').forEach(x=>x.remove());
+d.items.filter(i=>i.status===c.dataset.s).forEach(i=>{const e=document.createElement('div');e.className='card';e.draggable=true;e.dataset.id=i.id;
+e.innerHTML='<div class="tag">'+i.source+'</div>'+i.title.replace(/</g,'&lt;');e.ondragstart=ev=>ev.dataTransfer.setData('t',i.id);
+e.ondblclick=()=>api({setStatus:{id:i.id,status:i.status==='doing'?'done':'doing'}}).then(render);c.appendChild(e)})})}
+document.querySelectorAll('.col').forEach(c=>{c.ondragover=e=>{e.preventDefault();c.classList.add('over')};c.ondragleave=()=>c.classList.remove('over');
+c.ondrop=e=>{e.preventDefault();c.classList.remove('over');api({setStatus:{id:e.dataTransfer.getData('t'),status:c.dataset.s}}).then(render)}});
+n.onkeydown=e=>{if(e.key==='Enter'&&n.value.trim()){api({add:n.value.trim()}).then(render);n.value=''}};
+s.onclick=async()=>{s.disabled=true;const r=await fetch('/api/sync');const j=await r.json();if(!j.ok)alert(j.error);s.disabled=false;api().then(render)};
+api().then(render);
+</script></body></html>
