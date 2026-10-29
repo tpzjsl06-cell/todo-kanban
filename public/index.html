@@ -11,7 +11,7 @@ const api=(b)=>fetch('/api/todos',b?{method:'POST',body:JSON.stringify(b)}:{}).t
 function render(d){sub.textContent='마지막 cands 동기화: '+(d.syncedAt?new Date(d.syncedAt).toLocaleString('ko-KR'):'없음')+' (매시간 자동)';
 document.querySelectorAll('.col').forEach(c=>{c.querySelectorAll('.card').forEach(x=>x.remove());
 d.items.filter(i=>i.status===c.dataset.s).forEach(i=>{const e=document.createElement('div');e.className='card';e.draggable=true;e.dataset.id=i.id;
-e.innerHTML='<div class="tag">'+i.source+'</div>'+i.title.replace(/</g,'&lt;');e.ondragstart=ev=>ev.dataTransfer.setData('t',i.id);
+e.innerHTML='<div class="tag">'+i.source+(i.note?' · '+i.note.replace(/</g,'&lt;'):'')+'</div>'+i.title.replace(/</g,'&lt;')+(i.url?' <a href="'+i.url+'" target="_blank">원문</a>':'');e.ondragstart=ev=>ev.dataTransfer.setData('t',i.id);
 e.ondblclick=()=>api({setStatus:{id:i.id,status:i.status==='doing'?'done':'doing'}}).then(render);c.appendChild(e)})})}
 document.querySelectorAll('.col').forEach(c=>{c.ondragover=e=>{e.preventDefault();c.classList.add('over')};c.ondragleave=()=>c.classList.remove('over');
 c.ondrop=e=>{e.preventDefault();c.classList.remove('over');api({setStatus:{id:e.dataTransfer.getData('t'),status:c.dataset.s}}).then(render)}});
